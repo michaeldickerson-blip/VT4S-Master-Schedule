@@ -1,0 +1,37 @@
+.employee-row {
+  display: grid;
+  grid-template-columns: 150px repeat(7, 1fr);
+  gap: 1px;
+  background: #ddd;
+  border: 1px solid #ddd;
+  border-top: none;
+}
+
+.employee-name-cell {
+  background: white;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  border-right: 2px solid #ddd;
+}
+
+.employee-name {
+  color: #333;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .employee-row {
+    grid-template-columns: 120px repeat(7, 1fr);
+  }
+  
+  .employee-name-cell {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+}
+

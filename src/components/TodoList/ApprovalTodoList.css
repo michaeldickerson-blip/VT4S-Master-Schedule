@@ -1,0 +1,95 @@
+.approval-todo-list {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.approval-todo-list h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.approval-todo-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo-item {
+  padding: 0.75rem;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  background: #f9f9f9;
+}
+
+.todo-item:hover {
+  background: #f0f7ff;
+  border-color: #667eea;
+}
+
+.todo-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.employee-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.request-type {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.todo-item-details {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.request-date {
+  color: #333;
+  font-weight: 500;
+}
+
+.swap-arrow {
+  color: #999;
+}
+
+.custom-hours-info {
+  color: #666;
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+}
+
+.todo-item-time {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.todo-list-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-style: italic;
+}
+

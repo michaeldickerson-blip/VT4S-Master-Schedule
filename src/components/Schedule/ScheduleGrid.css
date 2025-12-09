@@ -1,0 +1,195 @@
+.schedule-grid-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.week-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.nav-button {
+  padding: 0.5rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.nav-button:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.nav-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.week-info {
+  font-weight: 500;
+  color: #333;
+}
+
+.schedule-grid {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.schedule-header-row {
+  display: grid;
+  grid-template-columns: 150px repeat(14, 1fr);
+  gap: 1px;
+  background: #ddd;
+  position: relative;
+}
+
+.schedule-header-row::after {
+  content: '';
+  position: absolute;
+  left: calc(150px + calc(7 * (100% - 150px) / 14));
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #999;
+  z-index: 5;
+}
+
+.schedule-header-row {
+  border-bottom: 1px solid #ddd;
+}
+
+.header-spacer {
+  background: white;
+  border-right: 2px solid #ddd;
+}
+
+.header-cell {
+  background: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.header-cell.weekend {
+  background: #f0f0f0;
+}
+
+.day-name {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.day-number {
+  font-size: 1.2rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.month-name {
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 0.25rem;
+}
+
+.schedule-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.employee-four-week-row {
+  display: grid;
+  grid-template-columns: 150px repeat(14, 1fr);
+  gap: 1px;
+  background: #ddd;
+  border: 1px solid #ddd;
+  border-top: none;
+  position: relative;
+}
+
+.employee-four-week-row::after {
+  content: '';
+  position: absolute;
+  left: calc(150px + calc(7 * (100% - 150px) / 14));
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #999;
+  z-index: 5;
+}
+
+/* Remove top border from first employee row since header is now above it */
+.schedule-body > .employee-four-week-row:first-of-type {
+  border-top: none;
+}
+
+.employee-four-week-row {
+  border-bottom: 1px solid #ddd;
+}
+
+/* Add a section separator class that we'll apply to the last row of weeks 1-2 */
+.section-separator {
+  border-bottom: 2px solid #999 !important;
+}
+
+.employee-name-cell {
+  background: white;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  border-right: 2px solid #ddd;
+}
+
+.employee-name {
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.schedule-grid-empty {
+  text-align: center;
+  padding: 3rem;
+  color: #999;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .schedule-header-row {
+    grid-template-columns: 120px repeat(14, 1fr);
+  }
+  
+  .schedule-header-row::after {
+    left: calc(120px + calc(7 * (100% - 120px) / 14));
+  }
+  
+  .employee-four-week-row {
+    grid-template-columns: 120px repeat(14, 1fr);
+  }
+  
+  .employee-four-week-row::after {
+    left: calc(120px + calc(7 * (100% - 120px) / 14));
+  }
+  
+  .employee-name-cell {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+  
+  .week-navigation {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+

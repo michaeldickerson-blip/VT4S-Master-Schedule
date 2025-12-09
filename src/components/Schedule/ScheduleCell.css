@@ -1,0 +1,88 @@
+.schedule-cell {
+  background: white;
+  padding: 0.5rem;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+}
+
+.schedule-cell:hover {
+  background: #f0f7ff;
+}
+
+.schedule-cell.weekend {
+  background: #f9f9f9;
+}
+
+.schedule-cell.weekend:hover {
+  background: #f0f0f0;
+}
+
+.schedule-cell.swapped {
+  background: #fff9c4;
+}
+
+.schedule-cell.swapped:hover {
+  background: #fff59d;
+}
+
+.schedule-cell.time-off {
+  background: #c8e6c9;
+}
+
+.schedule-cell.time-off:hover {
+  background: #a5d6a7;
+}
+
+.schedule-cell.custom-hours {
+  background: #e1bee7;
+}
+
+.schedule-cell.custom-hours:hover {
+  background: #ce93d8;
+}
+
+.schedule-cell.pending {
+  border: 2px solid #ffa726;
+  border-style: dashed;
+}
+
+.shift-time {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.shift-hours {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.pending-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .schedule-cell {
+    min-height: 50px;
+    padding: 0.25rem;
+  }
+  
+  .shift-time {
+    font-size: 0.75rem;
+  }
+  
+  .shift-hours {
+    font-size: 0.65rem;
+  }
+}
+
