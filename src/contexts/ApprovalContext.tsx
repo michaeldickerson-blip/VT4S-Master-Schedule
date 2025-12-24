@@ -17,7 +17,7 @@ interface ApprovalContextType {
     swapTo?: string,
     customShift?: string,
     customHours?: number
-  ) => ScheduleChangeRequest;
+  ) => Promise<ScheduleChangeRequest>;
   applyDirectChange: (
     employeeId: string,
     type: 'time_off' | 'swap' | 'custom_hours',
@@ -26,11 +26,11 @@ interface ApprovalContextType {
     swapTo?: string,
     customShift?: string,
     customHours?: number
-  ) => void;
-  revertChange: (employeeId: string, date: string) => void;
-  approveRequest: (requestId: string) => void;
-  rejectRequest: (requestId: string) => void;
-  refreshRequests: () => void;
+  ) => Promise<void>;
+  revertChange: (employeeId: string, date: string) => Promise<void>;
+  approveRequest: (requestId: string) => Promise<void>;
+  rejectRequest: (requestId: string) => Promise<void>;
+  refreshRequests: () => Promise<void>;
 }
 
 const ApprovalContext = createContext<ApprovalContextType | undefined>(undefined);
@@ -44,12 +44,16 @@ export function ApprovalProvider({ children }: { children: ReactNode }) {
     refreshRequests();
   }, []);
 
-  const refreshRequests = () => {
-    const allRequests = getChangeRequests();
-    setRequests(allRequests);
+  const refreshRequests = async () => {
+    try {
+      const allRequests = await getChangeRequests();
+      setRequests(allRequests);
+    } catch (error) {
+      console.error('Error refreshing requests:', error);
+    }
   };
 
-  const handleCreateRequest = (
+  const handleCreateRequest = async (
     employeeId: string,
     type: 'time_off' | 'swap' | 'custom_hours',
     date: string,
@@ -57,13 +61,13 @@ export function ApprovalProvider({ children }: { children: ReactNode }) {
     swapTo?: string,
     customShift?: string,
     customHours?: number
-  ): ScheduleChangeRequest => {
-    const request = createRequest(employeeId, type, date, swapFrom, swapTo, customShift, customHours);
-    refreshRequests();
+  ): Promise<ScheduleChangeRequest> => {
+    const request = await createRequest(employeeId, type, date, swapFrom, swapTo, customShift, customHours);
+    await refreshRequests();
     return request;
   };
 
-  const handleApplyDirectChange = (
+  const handleApplyDirectChange = async (
     employeeId: string,
     type: 'time_off' | 'swap' | 'custom_hours',
     date: string,
@@ -71,33 +75,33 @@ export function ApprovalProvider({ children }: { children: ReactNode }) {
     swapTo?: string,
     customShift?: string,
     customHours?: number
-  ): void => {
+  ): Promise<void> => {
     if (user) {
-      applyDirect(employeeId, type, date, swapFrom, swapTo, customShift, customHours, user.id);
-      refreshRequests();
-      refreshSchedules();
+      await applyDirect(employeeId, type, date, swapFrom, swapTo, customShift, customHours, user.id);
+      await refreshRequests();
+      await refreshSchedules();
     }
   };
 
-  const handleApproveRequest = (requestId: string) => {
+  const handleApproveRequest = async (requestId: string) => {
     if (user) {
-      approveChangeRequest(requestId, user.id);
-      refreshRequests();
-      refreshSchedules();
+      await approveChangeRequest(requestId, user.id);
+      await refreshRequests();
+      await refreshSchedules();
     }
   };
 
-  const handleRejectRequest = (requestId: string) => {
+  const handleRejectRequest = async (requestId: string) => {
     if (user) {
-      rejectChangeRequest(requestId, user.id);
-      refreshRequests();
+      await rejectChangeRequest(requestId, user.id);
+      await refreshRequests();
     }
   };
 
-  const handleRevertChange = (employeeId: string, date: string) => {
-    revertChange(employeeId, date);
-    refreshRequests();
-    refreshSchedules();
+  const handleRevertChange = async (employeeId: string, date: string) => {
+    await revertChange(employeeId, date);
+    await refreshRequests();
+    await refreshSchedules();
   };
 
   const value: ApprovalContextType = {

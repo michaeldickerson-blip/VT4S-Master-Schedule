@@ -11,12 +11,12 @@ export function EmployeeManager() {
   const [editName, setEditName] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const handleAddEmployee = () => {
+  const handleAddEmployee = async () => {
     if (newEmployeeName.trim()) {
-      addTeamMember(newEmployeeName.trim(), createDefaultPattern());
+      await addTeamMember(newEmployeeName.trim(), createDefaultPattern());
       setNewEmployeeName('');
-      refreshEmployees();
-      refreshSchedules();
+      await refreshEmployees();
+      await refreshSchedules();
     }
   };
 
@@ -25,13 +25,13 @@ export function EmployeeManager() {
     setEditName(currentName);
   };
 
-  const handleSaveEdit = (id: string) => {
+  const handleSaveEdit = async (id: string) => {
     if (editName.trim()) {
-      updateTeamMemberName(id, editName.trim());
+      await updateTeamMemberName(id, editName.trim());
       setEditingId(null);
       setEditName('');
-      refreshEmployees();
-      refreshSchedules();
+      await refreshEmployees();
+      await refreshSchedules();
     }
   };
 
@@ -40,11 +40,11 @@ export function EmployeeManager() {
     setEditName('');
   };
 
-  const handleDelete = (id: string) => {
-    removeTeamMember(id);
+  const handleDelete = async (id: string) => {
+    await removeTeamMember(id);
     setDeleteConfirmId(null);
-    refreshEmployees();
-    refreshSchedules();
+    await refreshEmployees();
+    await refreshSchedules();
   };
 
   return (

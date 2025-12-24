@@ -12,7 +12,7 @@ export function LoginForm({ onCancel }: LoginFormProps) {
   const [error, setError] = useState('');
   const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
@@ -21,7 +21,7 @@ export function LoginForm({ onCancel }: LoginFormProps) {
       return;
     }
 
-    const success = login(username, password);
+    const success = await login(username, password);
     if (!success) {
       setError('Invalid username or password');
     } else {

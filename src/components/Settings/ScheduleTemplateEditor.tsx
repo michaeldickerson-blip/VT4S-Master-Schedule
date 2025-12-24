@@ -50,10 +50,10 @@ export function ScheduleTemplateEditor() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selectedEmployeeId && pattern) {
-      updateTeamMemberPattern(selectedEmployeeId, pattern);
-      refreshSchedules();
+      await updateTeamMemberPattern(selectedEmployeeId, pattern);
+      await refreshSchedules();
       alert('Schedule pattern updated! Changes will apply to all future dates.');
     }
   };

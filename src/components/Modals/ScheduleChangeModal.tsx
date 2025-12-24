@@ -28,9 +28,25 @@ export function ScheduleChangeModal({
   const { employees, refreshSchedules } = useSchedule();
   const { user, isAdmin } = useAuth();
 
-  // Reset form when modal opens/closes or when switching types
+  const [currentEntry, setCurrentEntry] = useState<Awaited<ReturnType<typeof getScheduleEntry>>>(undefined);
+  const [loading, setLoading] = useState(false);
+
+  // Load current entry when modal opens
   useEffect(() => {
     if (isOpen) {
+      const loadEntry = async () => {
+        setLoading(true);
+        const entry = await getScheduleEntry(employeeId, date);
+        setCurrentEntry(entry);
+        setLoading(false);
+      };
+      loadEntry();
+    }
+  }, [isOpen, date, employeeId]);
+
+  // Reset form when modal opens/closes or when switching types
+  useEffect(() => {
+    if (isOpen && currentEntry !== undefined) {
       // Initialize custom hours from current entry if it exists
       if (currentEntry && currentEntry.isCustomHours) {
         setCustomShift(currentEntry.shift);
@@ -40,13 +56,14 @@ export function ScheduleChangeModal({
         setCustomHours(8);
       }
       setSwapToDate('');
+      const hasApprovedChange = currentEntry?.isTimeOff || currentEntry?.isSwapped || currentEntry?.isCustomHours;
       if (!hasApprovedChange) {
         setRequestType('time_off');
       } else {
         setRequestType('revert');
       }
     }
-  }, [isOpen, date, employeeId]);
+  }, [isOpen, date, employeeId, currentEntry]);
 
   if (!isOpen) return null;
 
@@ -80,7 +97,6 @@ export function ScheduleChangeModal({
   }
   
   // Check if this day has an approved change
-  const currentEntry = getScheduleEntry(employeeId, date);
   const hasApprovedChange = currentEntry?.isTimeOff || currentEntry?.isSwapped || currentEntry?.isCustomHours;
 
   // Filter out the selected date
@@ -93,7 +109,7 @@ export function ScheduleChangeModal({
     return dateStr >= new Date().toISOString().split('T')[0]; // FES can only swap with future dates
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!user) {
       return;
     }
@@ -101,8 +117,8 @@ export function ScheduleChangeModal({
     if (requestType === 'revert') {
       // Revert change (only admins can do this directly)
       if (isAdmin) {
-        revertChange(employeeId, date);
-        refreshSchedules();
+        await revertChange(employeeId, date);
+        await refreshSchedules();
         alert('Schedule change has been reverted to the original pattern.');
         onClose();
       }
@@ -112,8 +128,8 @@ export function ScheduleChangeModal({
     if (isAdmin) {
       // Admin directly applies changes
       if (requestType === 'time_off') {
-        applyDirectChange(employeeId, 'time_off', date);
-        refreshSchedules();
+        await applyDirectChange(employeeId, 'time_off', date);
+        await refreshSchedules();
         alert('Time off has been applied to the schedule.');
         onClose();
       } else if (requestType === 'swap') {
@@ -121,8 +137,8 @@ export function ScheduleChangeModal({
           alert('Please select a date to swap with.');
           return;
         }
-        applyDirectChange(employeeId, 'swap', date, date, swapToDate);
-        refreshSchedules();
+        await applyDirectChange(employeeId, 'swap', date, date, swapToDate);
+        await refreshSchedules();
         alert('Day swap has been applied to the schedule.');
         onClose();
       } else if (requestType === 'custom_hours') {
@@ -134,15 +150,15 @@ export function ScheduleChangeModal({
           alert('Hours must be between 0 and 24.');
           return;
         }
-        applyDirectChange(employeeId, 'custom_hours', date, undefined, undefined, customShift, customHours);
-        refreshSchedules();
+        await applyDirectChange(employeeId, 'custom_hours', date, undefined, undefined, customShift, customHours);
+        await refreshSchedules();
         alert('Custom hours have been applied to the schedule.');
         onClose();
       }
     } else {
       // FES creates a request that needs approval
       if (requestType === 'time_off') {
-        createChangeRequest(employeeId, 'time_off', date);
+        await createChangeRequest(employeeId, 'time_off', date);
         alert('Time off request submitted! Waiting for approval.');
         onClose();
       } else if (requestType === 'swap') {
@@ -150,7 +166,7 @@ export function ScheduleChangeModal({
           alert('Please select a date to swap with.');
           return;
         }
-        createChangeRequest(employeeId, 'swap', date, date, swapToDate);
+        await createChangeRequest(employeeId, 'swap', date, date, swapToDate);
         alert('Swap request submitted! Waiting for approval.');
         onClose();
       } else if (requestType === 'custom_hours') {
@@ -162,7 +178,7 @@ export function ScheduleChangeModal({
           alert('Hours must be between 0 and 24.');
           return;
         }
-        createChangeRequest(employeeId, 'custom_hours', date, undefined, undefined, customShift, customHours);
+        await createChangeRequest(employeeId, 'custom_hours', date, undefined, undefined, customShift, customHours);
         alert('Custom hours request submitted! Waiting for approval.');
         onClose();
       }

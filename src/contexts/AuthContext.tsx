@@ -5,7 +5,7 @@ import { getUserByUsername, hashPassword, initializeDefaultAdmin } from '../serv
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => boolean;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   setGuestMode: () => void;
   isAdmin: boolean;
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Initialize default admin on first load
-    initializeDefaultAdmin();
+    initializeDefaultAdmin().catch(console.error);
     
     // Check if user is stored in sessionStorage
     const storedUser = sessionStorage.getItem('current_user');
@@ -46,8 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (username: string, password: string): boolean => {
-    const foundUser = getUserByUsername(username);
+  const login = async (username: string, password: string): Promise<boolean> => {
+    const foundUser = await getUserByUsername(username);
     if (foundUser && foundUser.passwordHash === hashPassword(password)) {
       setUser(foundUser);
       sessionStorage.setItem('current_user', JSON.stringify(foundUser));

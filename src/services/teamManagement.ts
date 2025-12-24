@@ -1,5 +1,6 @@
 import type { Employee, WeeklyPattern } from '../types';
-import { addEmployee, updateEmployee, removeEmployee, getAllEmployees, getLatestTeamChange, loadData, saveData } from './storage';
+import { addEmployee, updateEmployee, removeEmployee, getAllEmployees, getLatestTeamChange } from './storage';
+import { supabase, TABLES } from './supabase';
 import { generateAllSchedules, generateEmployeeSchedule } from './schedule';
 import { createDefaultPattern } from '../utils/scheduleUtils';
 
@@ -18,56 +19,55 @@ export function createEmployee(name: string, pattern?: WeeklyPattern): Employee 
 /**
  * Add a new employee to the team
  */
-export function addTeamMember(name: string, pattern?: WeeklyPattern): Employee {
+export async function addTeamMember(name: string, pattern?: WeeklyPattern): Promise<Employee> {
   const employee = createEmployee(name, pattern);
-  addEmployee(employee);
-  generateAllSchedules([employee]);
+  await addEmployee(employee);
+  await generateAllSchedules([employee]);
   return employee;
 }
 
 /**
  * Update employee name
  */
-export function updateTeamMemberName(employeeId: string, newName: string): void {
-  updateEmployee(employeeId, { name: newName });
+export async function updateTeamMemberName(employeeId: string, newName: string): Promise<void> {
+  await updateEmployee(employeeId, { name: newName });
 }
 
 /**
  * Update employee schedule pattern
  */
-export function updateTeamMemberPattern(employeeId: string, pattern: WeeklyPattern): void {
-  updateEmployee(employeeId, { weeklyPattern: pattern });
+export async function updateTeamMemberPattern(employeeId: string, pattern: WeeklyPattern): Promise<void> {
+  await updateEmployee(employeeId, { weeklyPattern: pattern });
   
   // Record pattern change
-  const data = loadData();
-  data.teamChanges.push({
+  await supabase.from(TABLES.TEAM_CHANGES).insert({
     id: `change-${Date.now()}`,
     type: 'schedule_pattern_changed',
-    employeeId: employeeId,
+    employee_id: employeeId,
     timestamp: new Date().toISOString(),
     changes: { pattern },
   });
-  saveData(data);
   
   // Regenerate schedule for this employee
-  const employee = getAllEmployees().find(emp => emp.id === employeeId);
+  const allEmployees = await getAllEmployees();
+  const employee = allEmployees.find(emp => emp.id === employeeId);
   if (employee) {
-    generateEmployeeSchedule(employee);
+    await generateEmployeeSchedule(employee);
   }
 }
 
 /**
  * Remove team member
  */
-export function removeTeamMember(employeeId: string): void {
-  removeEmployee(employeeId);
+export async function removeTeamMember(employeeId: string): Promise<void> {
+  await removeEmployee(employeeId);
 }
 
 /**
  * Get change timestamp for an employee (when their pattern was last changed)
  */
-export function getEmployeeChangeTimestamp(employeeId: string): string | undefined {
-  const change = getLatestTeamChange(employeeId);
+export async function getEmployeeChangeTimestamp(employeeId: string): Promise<string | undefined> {
+  const change = await getLatestTeamChange(employeeId);
   if (change && (change.type === 'schedule_pattern_changed' || change.type === 'employee_added')) {
     return change.timestamp;
   }

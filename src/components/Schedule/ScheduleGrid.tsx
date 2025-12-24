@@ -4,7 +4,7 @@ import { addDays } from 'date-fns';
 import { useSchedule } from '../../contexts/ScheduleContext';
 import { useApproval } from '../../contexts/ApprovalContext';
 import { getSixMonthsOfWeeks, getWeekDates } from '../../utils/dateUtils';
-import { getScheduleEntry } from '../../services/schedule';
+import type { ScheduleEntry } from '../../types';
 import { ScheduleCell } from './ScheduleCell';
 import './ScheduleGrid.css';
 
@@ -14,14 +14,34 @@ interface ScheduleGridProps {
 }
 
 export function ScheduleGrid({ showHistorical, onCellClick }: ScheduleGridProps) {
-  const { employees, refreshTrigger } = useSchedule();
+  const { employees, refreshTrigger, getEmployeeSchedule } = useSchedule();
   const { allRequests } = useApproval();
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(0);
+  const [scheduleCache, setScheduleCache] = useState<Map<string, ScheduleEntry[]>>(new Map());
   
-  // Re-render when schedules are refreshed
+  // Load schedules when employees or refreshTrigger changes
   useEffect(() => {
-    // This effect will run when refreshTrigger changes, forcing a re-render
-  }, [refreshTrigger]);
+    const loadSchedules = async () => {
+      const cache = new Map<string, ScheduleEntry[]>();
+      await Promise.all(
+        employees.map(async (employee) => {
+          const schedule = await getEmployeeSchedule(employee.id);
+          cache.set(employee.id, schedule);
+        })
+      );
+      setScheduleCache(cache);
+    };
+    
+    if (employees.length > 0) {
+      loadSchedules();
+    }
+  }, [employees, refreshTrigger, getEmployeeSchedule]);
+  
+  // Helper function to get schedule entry from cache
+  const getScheduleEntry = (employeeId: string, date: string): ScheduleEntry | undefined => {
+    const schedule = scheduleCache.get(employeeId);
+    return schedule?.find(entry => entry.date === date);
+  };
 
   const allWeeks = useMemo(() => getSixMonthsOfWeeks(), []);
   const today = new Date();

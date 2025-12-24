@@ -5,7 +5,7 @@ import type { User } from '../../types';
 import './UserManager.css';
 
 export function UserManager() {
-  const [users, setUsers] = useState<User[]>(getAllUsers());
+  const [users, setUsers] = useState<User[]>([]);
   const { employees } = useSchedule();
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -13,16 +13,25 @@ export function UserManager() {
   const [newEmployeeId, setNewEmployeeId] = useState<string>('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     refreshUsers();
   }, []);
 
-  const refreshUsers = () => {
-    setUsers(getAllUsers());
+  const refreshUsers = async () => {
+    try {
+      setLoading(true);
+      const allUsers = await getAllUsers();
+      setUsers(allUsers);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load users');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     setError('');
     
     if (!newUsername.trim()) {
@@ -64,8 +73,8 @@ export function UserManager() {
         employeeId: newRole === 'fes' ? newEmployeeId : undefined,
       };
       
-      addUser(newUser);
-      refreshUsers();
+      await addUser(newUser);
+      await refreshUsers();
       setNewUsername('');
       setNewPassword('');
       setNewRole('fes');
@@ -76,11 +85,11 @@ export function UserManager() {
     }
   };
 
-  const handleDelete = (userId: string) => {
+  const handleDelete = async (userId: string) => {
     try {
-      removeUser(userId);
+      await removeUser(userId);
       setDeleteConfirmId(null);
-      refreshUsers();
+      await refreshUsers();
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove user');

@@ -7,14 +7,14 @@ import { getScheduleEntries, saveScheduleEntries, getLatestTeamChange, getChange
 /**
  * Generate or update schedule for an employee
  */
-export function generateEmployeeSchedule(employee: Employee): ScheduleEntry[] {
+export async function generateEmployeeSchedule(employee: Employee): Promise<ScheduleEntry[]> {
   const dates = getSixMonthsOfDates();
-  const existingEntries = getScheduleEntries(employee.id);
-  const latestChange = getLatestTeamChange(employee.id);
+  const existingEntries = await getScheduleEntries(employee.id);
+  const latestChange = await getLatestTeamChange(employee.id);
   const changeTimestamp = latestChange?.timestamp;
   
   // Get all approved change requests for this employee
-  const allRequests = getChangeRequests();
+  const allRequests = await getChangeRequests();
   const approvedRequests = allRequests.filter(
     req => req.employeeId === employee.id && req.status === 'approved'
   );
@@ -159,32 +159,30 @@ export function generateEmployeeSchedule(employee: Employee): ScheduleEntry[] {
   });
   
   // Save and return
-  saveScheduleEntries(employee.id, entries);
+  await saveScheduleEntries(employee.id, entries);
   return entries;
 }
 
 /**
  * Generate schedules for all employees
  */
-export function generateAllSchedules(employees: Employee[]): void {
-  employees.forEach(employee => {
-    generateEmployeeSchedule(employee);
-  });
+export async function generateAllSchedules(employees: Employee[]): Promise<void> {
+  await Promise.all(employees.map(employee => generateEmployeeSchedule(employee)));
 }
 
 /**
  * Get schedule entry for a specific employee and date
  */
-export function getScheduleEntry(employeeId: string, date: string): ScheduleEntry | undefined {
-  const entries = getScheduleEntries(employeeId);
+export async function getScheduleEntry(employeeId: string, date: string): Promise<ScheduleEntry | undefined> {
+  const entries = await getScheduleEntries(employeeId);
   return entries.find(entry => entry.date === date);
 }
 
 /**
  * Update schedule entry
  */
-export function updateScheduleEntry(employeeId: string, entry: ScheduleEntry): void {
-  const entries = getScheduleEntries(employeeId);
+export async function updateScheduleEntry(employeeId: string, entry: ScheduleEntry): Promise<void> {
+  const entries = await getScheduleEntries(employeeId);
   const index = entries.findIndex(e => e.date === entry.date);
   
   if (index !== -1) {
@@ -193,27 +191,28 @@ export function updateScheduleEntry(employeeId: string, entry: ScheduleEntry): v
     entries.push(entry);
   }
   
-  saveScheduleEntries(employeeId, entries);
+  await saveScheduleEntries(employeeId, entries);
 }
 
 /**
  * Revert a schedule change back to the original pattern
  */
-export function revertScheduleChange(employeeId: string, date: string): void {
-  const entry = getScheduleEntry(employeeId, date);
+export async function revertScheduleChange(employeeId: string, date: string): Promise<void> {
+  const entry = await getScheduleEntry(employeeId, date);
   if (!entry) return;
   
-  const employee = getAllEmployees().find(emp => emp.id === employeeId);
+  const allEmployees = await getAllEmployees();
+  const employee = allEmployees.find(emp => emp.id === employeeId);
   if (!employee) return;
   
-  const latestChange = getLatestTeamChange(employeeId);
+  const latestChange = await getLatestTeamChange(employeeId);
   const changeTimestamp = latestChange?.timestamp;
   const dateObj = parseISO(date);
   
   // If it's a swap, we need to revert both days
   if (entry.isSwapped) {
     // Find the swap request to get both dates
-    const requests = getChangeRequests();
+    const requests = await getChangeRequests();
     const swapRequest = requests.find(
       req => 
         req.employeeId === employeeId &&
@@ -235,27 +234,27 @@ export function revertScheduleChange(employeeId: string, date: string): void {
       toEntry.date = swapRequest.swapTo;
       delete toEntry.isSwapped;
       
-      updateScheduleEntry(employeeId, fromEntry);
-      updateScheduleEntry(employeeId, toEntry);
+      await updateScheduleEntry(employeeId, fromEntry);
+      await updateScheduleEntry(employeeId, toEntry);
       
       // Mark the request as rejected (reverted)
-      updateChangeRequest(swapRequest.id, { status: 'rejected' });
+      await updateChangeRequest(swapRequest.id, { status: 'rejected' });
     } else {
       // Just revert this one day if we can't find the swap
       const restoredEntry = generateScheduleEntry(employee, dateObj, changeTimestamp);
       restoredEntry.date = date;
       delete restoredEntry.isSwapped;
-      updateScheduleEntry(employeeId, restoredEntry);
+      await updateScheduleEntry(employeeId, restoredEntry);
     }
   } else if (entry.isTimeOff) {
     // If it's a time off, restore from pattern
     const restoredEntry = generateScheduleEntry(employee, dateObj, changeTimestamp);
     restoredEntry.date = date;
     delete restoredEntry.isTimeOff;
-    updateScheduleEntry(employeeId, restoredEntry);
+    await updateScheduleEntry(employeeId, restoredEntry);
     
     // Mark the time off request as rejected (reverted)
-    const requests = getChangeRequests();
+    const requests = await getChangeRequests();
     const timeOffRequest = requests.find(
       req => 
         req.employeeId === employeeId &&
@@ -264,17 +263,17 @@ export function revertScheduleChange(employeeId: string, date: string): void {
         req.date === date
     );
     if (timeOffRequest) {
-      updateChangeRequest(timeOffRequest.id, { status: 'rejected' });
+      await updateChangeRequest(timeOffRequest.id, { status: 'rejected' });
     }
   } else if (entry.isCustomHours) {
     // If it's custom hours, restore from pattern
     const restoredEntry = generateScheduleEntry(employee, dateObj, changeTimestamp);
     restoredEntry.date = date;
     delete restoredEntry.isCustomHours;
-    updateScheduleEntry(employeeId, restoredEntry);
+    await updateScheduleEntry(employeeId, restoredEntry);
     
     // Mark the custom hours request as rejected (reverted)
-    const requests = getChangeRequests();
+    const requests = await getChangeRequests();
     const customHoursRequest = requests.find(
       req => 
         req.employeeId === employeeId &&
@@ -283,7 +282,7 @@ export function revertScheduleChange(employeeId: string, date: string): void {
         req.date === date
     );
     if (customHoursRequest) {
-      updateChangeRequest(customHoursRequest.id, { status: 'rejected' });
+      await updateChangeRequest(customHoursRequest.id, { status: 'rejected' });
     }
   }
 }
@@ -291,12 +290,12 @@ export function revertScheduleChange(employeeId: string, date: string): void {
 /**
  * Apply approved change request to schedule
  */
-export function applyApprovedChange(
+export async function applyApprovedChange(
   employeeId: string,
   request: { type: 'time_off' | 'swap' | 'custom_hours'; date: string; swapFrom?: string; swapTo?: string; customShift?: string; customHours?: number }
-): void {
+): Promise<void> {
   if (request.type === 'time_off') {
-    let entry = getScheduleEntry(employeeId, request.date);
+    let entry = await getScheduleEntry(employeeId, request.date);
     if (!entry) {
       // Create new entry if it doesn't exist
       entry = {
@@ -311,9 +310,9 @@ export function applyApprovedChange(
       entry.isTimeOff = true;
       delete entry.isCustomHours; // Remove custom hours flag if it exists
     }
-    updateScheduleEntry(employeeId, entry);
+    await updateScheduleEntry(employeeId, entry);
   } else if (request.type === 'custom_hours' && request.customShift && request.customHours !== undefined) {
-    let entry = getScheduleEntry(employeeId, request.date);
+    let entry = await getScheduleEntry(employeeId, request.date);
     if (!entry) {
       // Create new entry if it doesn't exist
       entry = {
@@ -329,10 +328,10 @@ export function applyApprovedChange(
       delete entry.isTimeOff; // Remove time off flag if it exists
       delete entry.isSwapped; // Remove swapped flag if it exists
     }
-    updateScheduleEntry(employeeId, entry);
+    await updateScheduleEntry(employeeId, entry);
   } else if (request.type === 'swap' && request.swapFrom && request.swapTo) {
-    const fromEntry = getScheduleEntry(employeeId, request.swapFrom);
-    const toEntry = getScheduleEntry(employeeId, request.swapTo);
+    const fromEntry = await getScheduleEntry(employeeId, request.swapFrom);
+    const toEntry = await getScheduleEntry(employeeId, request.swapTo);
     
     if (fromEntry && toEntry) {
       // Swap the shifts
@@ -347,8 +346,8 @@ export function applyApprovedChange(
       toEntry.hours = tempHours;
       toEntry.isSwapped = true;
       
-      updateScheduleEntry(employeeId, fromEntry);
-      updateScheduleEntry(employeeId, toEntry);
+      await updateScheduleEntry(employeeId, fromEntry);
+      await updateScheduleEntry(employeeId, toEntry);
     }
   }
 }
