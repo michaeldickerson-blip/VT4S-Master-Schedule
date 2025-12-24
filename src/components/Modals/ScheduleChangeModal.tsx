@@ -29,7 +29,7 @@ export function ScheduleChangeModal({
   const { user, isAdmin } = useAuth();
 
   const [currentEntry, setCurrentEntry] = useState<Awaited<ReturnType<typeof getScheduleEntry>>>(undefined);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   // Load current entry when modal opens
   useEffect(() => {

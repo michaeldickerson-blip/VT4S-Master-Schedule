@@ -13,7 +13,7 @@ export function UserManager() {
   const [newEmployeeId, setNewEmployeeId] = useState<string>('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     refreshUsers();

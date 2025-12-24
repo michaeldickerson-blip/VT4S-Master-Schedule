@@ -1,7 +1,8 @@
-import type { Employee } from '../../types';
+import { useState, useEffect } from 'react';
+import type { Employee, ScheduleEntry } from '../../types';
 import { ScheduleCell } from './ScheduleCell';
 import { getWeekDates } from '../../utils/dateUtils';
-import { getScheduleEntry } from '../../services/schedule';
+import { useSchedule } from '../../contexts/ScheduleContext';
 import './EmployeeRow.css';
 
 interface EmployeeRowProps {
@@ -18,6 +19,20 @@ export function EmployeeRow({
   hasPendingRequest,
 }: EmployeeRowProps) {
   const weekDates = getWeekDates(weekStart);
+  const { getEmployeeSchedule } = useSchedule();
+  const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>([]);
+
+  useEffect(() => {
+    const loadSchedule = async () => {
+      const schedule = await getEmployeeSchedule(employee.id);
+      setScheduleEntries(schedule);
+    };
+    loadSchedule();
+  }, [employee.id, getEmployeeSchedule]);
+
+  const getEntryForDate = (dateStr: string): ScheduleEntry | undefined => {
+    return scheduleEntries.find(entry => entry.date === dateStr);
+  };
 
   return (
     <div className="employee-row">
@@ -26,7 +41,7 @@ export function EmployeeRow({
       </div>
       {weekDates.map((date) => {
         const dateStr = date.toISOString().split('T')[0];
-        const entry = getScheduleEntry(employee.id, dateStr);
+        const entry = getEntryForDate(dateStr);
         const hasPending = hasPendingRequest(employee.id, dateStr);
         
         return (
